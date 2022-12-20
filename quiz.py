@@ -13,7 +13,16 @@ updater=Updater(TOKEN)
 
 def start(update:Update, context:CallbackContext):
     arr=[]
+    chat_id = update.message.chat.id 
+    first_name = update.message.from_user.first_name
+    url1=f'http://127.0.0.1:8000/api/student/'
     url='http://127.0.0.1:8000/api/quiz/'
+    data_list={
+        "telegram_id":chat_id,
+        "list_question":[],
+        "first_name":first_name,
+    }
+    r=requests.post(url1, json=data_list)
     data=requests.get(url).json()
     for i in data:
         inlinekeyboard = InlineKeyboardButton(f'{i["title"]}',callback_data="✋"+str(i['id']))
@@ -52,36 +61,34 @@ def quetion(update:Update, context:CallbackContext):
     bot = context.bot
     query=update.callback_query
     chat_id = query.message.chat.id 
-    # first_name = update.message.from_user.first_name
-    first_name='Diyorbek'
-    # print(first_name)
     id = query.data[1:]
     url=f'http://127.0.0.1:8000/api/quiz/{id}/'
     data = requests.get(url).json()
     qeution_list=data["topic"]["quetion_index"]
-    url1=f'http://127.0.0.1:8000/api/student/'
+    url1=f'http://127.0.0.1:8000/api/studentget/{chat_id}/'
+    r = requests.get(url1).json()
+    
+    url2=f'http://127.0.0.1:8000/api/updaterstudent/{r["id"]}/'
     if len(qeution_list)>0:
         list2=[]
         data_question=data['topic']["quetion_index"][0]
         img=data['topic']['question'][data_question]['img']
         text=data['topic']['question'][data_question]['title']
-        inlineKeyboard = InlineKeyboardButton('A',callback_data='✅A')
-        inlineKeyboard1 = InlineKeyboardButton('B',callback_data='✅B')
-        inlineKeyboard2 = InlineKeyboardButton('C',callback_data='✅C')
-        inlineKeyboard3 = InlineKeyboardButton('D',callback_data='✅D')
-        inlineKeyboard4 = InlineKeyboardButton('⏭',callback_data=f'⏭{id}')
+        inlineKeyboard = InlineKeyboardButton('A',callback_data=f'⏭{id}')
+        inlineKeyboard1 = InlineKeyboardButton('B',callback_data=f'⏭{id}')
+        inlineKeyboard2 = InlineKeyboardButton('C',callback_data=f'⏭{id}')
+        inlineKeyboard3 = InlineKeyboardButton('D',callback_data=f'⏭{id}')
+        # inlineKeyboard4 = InlineKeyboardButton('⏭',callback_data=f'⏭{id}')
         reply_markup = InlineKeyboardMarkup([
-            [inlineKeyboard,inlineKeyboard1,inlineKeyboard2,inlineKeyboard3],[inlineKeyboard4]
+            [inlineKeyboard,inlineKeyboard1,inlineKeyboard2,inlineKeyboard3]
             ])
         updater.bot.sendPhoto(chat_id, img, text, reply_markup=reply_markup)
         if len(qeution_list) > 0:
                 qeution_list.pop(0)
                 data_list = {
-                    "telegram_id":chat_id,
                     "list_question":qeution_list,
-                    "first_name":first_name,
                     }
-                r=requests.post(url1, json = data_list)
+                r=requests.post(url2, json = data_list)
                 
         else :
             updater.bot.sendMessage(chat_id, 'Bu mavzu bo\'yicha savollarimiz tugadi.')
@@ -98,24 +105,28 @@ def next_quetion(update:Update, context:CallbackContext):
     data = requests.get(url).json()
     r = requests.get(url1).json()
     url2=f'http://127.0.0.1:8000/api/updaterstudent/{r["id"]}/'
-    # print(r['list_question'])
+
     if len(r['list_question'])>0:
         list2=[]
-        data_question=r['list_question']
+        data_question=r['list_question'][0]
         
-        img=data['topic']['question'][data_question][0]['img']
-        text=data['topic']['question'][data_question][0]['title']
-        inlineKeyboard = InlineKeyboardButton('A',callback_data='✅A')
-        inlineKeyboard1 = InlineKeyboardButton('B',callback_data='✅B')
-        inlineKeyboard2 = InlineKeyboardButton('C',callback_data='✅C')
-        inlineKeyboard3 = InlineKeyboardButton('D',callback_data='✅D')
-        inlineKeyboard4 = InlineKeyboardButton('⏭',callback_data=f'⏭{id}')
+        img=data['topic']['question'][data_question]['img']
+        text=data['topic']['question'][data_question]['title']
+        inlineKeyboard = InlineKeyboardButton('A',callback_data=f'⏭{id}')
+        inlineKeyboard1 = InlineKeyboardButton('B',callback_data=f'⏭{id}')
+        inlineKeyboard2 = InlineKeyboardButton('C',callback_data=f'⏭{id}')
+        inlineKeyboard3 = InlineKeyboardButton('D',callback_data=f'⏭{id}')
+        # inlineKeyboard4 = InlineKeyboardButton('⏭',callback_data=f'⏭{id}')
         reply_markup = InlineKeyboardMarkup([
-            [inlineKeyboard,inlineKeyboard1,inlineKeyboard2,inlineKeyboard3],[inlineKeyboard4]
+            [inlineKeyboard,inlineKeyboard1,inlineKeyboard2,inlineKeyboard3]
             ])
         updater.bot.sendPhoto(chat_id, img, text, reply_markup=reply_markup)
-        if len(data_question) > 0:
-                data_question.pop(0)
+        if len(r['list_question']) > 0:
+            r['list_question'].pop(0)
+            data_list = {
+                "list_question":r['list_question'],
+                    }
+            r=requests.post(url2, json = data_list)
         else :
             updater.bot.sendMessage(chat_id, 'Bu mavzu bo\'yicha savollarimiz tugadi.') 
 
