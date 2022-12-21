@@ -45,9 +45,18 @@ def topic(update:Update, context:CallbackContext):
     list1=[]
     query = update.callback_query
     id = query.data[1:]
+    # chat_id = update.message.chat.id 
+    first_name = update.message.from_user.first_name
     
     url=f'http://127.0.0.1:8000/api/topic/{id}/'
+    url1=f'http://127.0.0.1:8000/api/resultadd/'
     data = requests.get(url).json()
+    data_list = {
+        "score":0,
+        "student":first_name,
+        "topic":id,
+    }
+    r= requests.post(url1, json=data_list)
  
     for i in data["topic"]:
         inlinekeyboard = InlineKeyboardButton(f'{i["title"]}', callback_data="👍"+str(i["id"]))
@@ -55,6 +64,8 @@ def topic(update:Update, context:CallbackContext):
     inlinekeyboard1=InlineKeyboardButton("◀️", callback_data="◀back")
     reply_markup = InlineKeyboardMarkup([list1,[inlinekeyboard1]],)
     query.edit_message_text(text="Python", reply_markup=reply_markup)
+    query.answer("topic",show_alert=True)
+    return r.status_code
 
 def quetion(update:Update, context:CallbackContext):
     
@@ -64,20 +75,24 @@ def quetion(update:Update, context:CallbackContext):
     id = query.data[1:]
     url=f'http://127.0.0.1:8000/api/quiz/{id}/'
     data = requests.get(url).json()
+    # print(pk, pk_quistion)
     qeution_list=data["topic"]["quetion_index"]
     url1=f'http://127.0.0.1:8000/api/studentget/{chat_id}/'
     r = requests.get(url1).json()
     
     url2=f'http://127.0.0.1:8000/api/updaterstudent/{r["id"]}/'
     if len(qeution_list)>0:
-        list2=[]
+        pk = data['topic']['id']
+        for i in data['topic']['question'][qeution_list[0]]['optons']:
+            pk_quistion=i['id']
+
         data_question=data['topic']["quetion_index"][0]
         img=data['topic']['question'][data_question]['img']
         text=data['topic']['question'][data_question]['title']
-        inlineKeyboard = InlineKeyboardButton('A',callback_data=f'⏭{id}')
-        inlineKeyboard1 = InlineKeyboardButton('B',callback_data=f'⏭{id}')
-        inlineKeyboard2 = InlineKeyboardButton('C',callback_data=f'⏭{id}')
-        inlineKeyboard3 = InlineKeyboardButton('D',callback_data=f'⏭{id}')
+        inlineKeyboard = InlineKeyboardButton('A',callback_data=f'⏭{id} {pk} {pk_quistion}')
+        inlineKeyboard1 = InlineKeyboardButton('B',callback_data=f'⏭{id} {pk} {pk_quistion}')
+        inlineKeyboard2 = InlineKeyboardButton('C',callback_data=f'⏭{id} {pk} {pk_quistion}')
+        inlineKeyboard3 = InlineKeyboardButton('D',callback_data=f'⏭{id} {pk} {pk_quistion}')
         # inlineKeyboard4 = InlineKeyboardButton('⏭',callback_data=f'⏭{id}')
         reply_markup = InlineKeyboardMarkup([
             [inlineKeyboard,inlineKeyboard1,inlineKeyboard2,inlineKeyboard3]
@@ -98,24 +113,31 @@ def next_quetion(update:Update, context:CallbackContext):
     bot = context.bot
     query=update.callback_query
     chat_id = query.message.chat.id 
-    id = query.data[-1]
+    id = query.data.split()[1]
+    print(query.data)
     url1=f'http://127.0.0.1:8000/api/studentget/{chat_id}/'
     url=f'http://127.0.0.1:8000/api/quiz/{id}/'
     
     data = requests.get(url).json()
     r = requests.get(url1).json()
+    qeution_list=r['list_question']
     url2=f'http://127.0.0.1:8000/api/updaterstudent/{r["id"]}/'
 
-    if len(r['list_question'])>0:
+    if len(qeution_list)>0:
         list2=[]
         data_question=r['list_question'][0]
+        pk = data['topic']['id']
+        for i in data['topic']['question'][qeution_list[0]]['optons']:
+            print(i)
+            pk_quistion=i['id']
+            # print(pk_quistion)
         
         img=data['topic']['question'][data_question]['img']
         text=data['topic']['question'][data_question]['title']
-        inlineKeyboard = InlineKeyboardButton('A',callback_data=f'⏭{id}')
-        inlineKeyboard1 = InlineKeyboardButton('B',callback_data=f'⏭{id}')
-        inlineKeyboard2 = InlineKeyboardButton('C',callback_data=f'⏭{id}')
-        inlineKeyboard3 = InlineKeyboardButton('D',callback_data=f'⏭{id}')
+        inlineKeyboard = InlineKeyboardButton('A',callback_data=f'⏭{id} {pk} {pk_quistion}')
+        inlineKeyboard1 = InlineKeyboardButton('B',callback_data=f'⏭{id} {pk} {pk_quistion}')
+        inlineKeyboard2 = InlineKeyboardButton('C',callback_data=f'⏭{id} {pk} {pk_quistion}')
+        inlineKeyboard3 = InlineKeyboardButton('D',callback_data=f'⏭{id} {pk} {pk_quistion}')
         # inlineKeyboard4 = InlineKeyboardButton('⏭',callback_data=f'⏭{id}')
         reply_markup = InlineKeyboardMarkup([
             [inlineKeyboard,inlineKeyboard1,inlineKeyboard2,inlineKeyboard3]
@@ -129,6 +151,9 @@ def next_quetion(update:Update, context:CallbackContext):
             r=requests.post(url2, json = data_list)
         else :
             updater.bot.sendMessage(chat_id, 'Bu mavzu bo\'yicha savollarimiz tugadi.') 
+
+def resultdetail(update:Update, context:CallbackContext):
+    pass
 
 
 updater.dispatcher.add_handler(CommandHandler('start',start))
