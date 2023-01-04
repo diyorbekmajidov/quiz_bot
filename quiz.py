@@ -117,7 +117,6 @@ def quetion(update:Update, context:CallbackContext):
 def next_quetion(update:Update, context:CallbackContext):
     query=update.callback_query
     chat_id = query.message.chat.id 
-    print(query.data)
     id = query.data.split()[1]
     url1=f'http://127.0.0.1:8000/api/studentget/{chat_id}/'
     url=f'http://127.0.0.1:8000/api/quiz/{id}/'
